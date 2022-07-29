@@ -1,39 +1,45 @@
 " The raw file format is fairly awful, but it does have a prescribed header we
 " can check for.
 
-au BufNewFile,BufRead *.txt
-    \  if g:dwarffortress_always 
-    \|   set ft=dwarffortress
-    \| elseif g:dwarffortress_guess
-    \|   call s:DwarfFortressDetect()
-    \| endif
+autocmd BufNewFile,BufRead *.txt
+      \  if g:dwarffortress_always
+      \|   set filetype=dwarffortress
+      \| elseif g:dwarffortress_guess
+      \|   call s:DwarfFortressDetect()
+      \| endif
 
-function s:DwarfFortressDetect()
+const s:types = #{
+      \ init: '%(sound|windowedx|vsync)',
+      \ d_init: 'autobackup',
+      \ world_gen: 'world_gen',
+      \ colors: 'black_r',
+      \ announcements: 'reached_peak',
+      \ interface: 'bind',
+      \ }
+
+function s:token_pattern(pat) abort
+  return printf('\v\c\[\s*%s\s*[\]:]', a:pat)
+endfunction
+
+function s:DwarfFortressDetect() abort
     " raw.txt contents:
     " raw
     " This is a raw file.
     " [OBJECT:SOMETHING]
     " ...
     "
-    let l:contents = readfile(expand(@%))
-    let l:stem = expand('%:t:r')
+    const contents = getline(1, min([line('$'), 20]))
+    const stem = expand('<afile>:t:r')
 
-    let l:raw       = getline(1) =~? '\V'.l:stem
-                \ && match(l:contents, '\V\c[\s\*OBJECT\s\*:') != -1
-    let l:init      = l:stem ==? 'init' 
-                \ && match(l:contents, '\V\c[\s\*\(SOUND\|WINDOWEDX\|VSYNC\)\s\*:') != -1
-    let l:d_init    = l:stem ==? 'd_init'
-                \ && match(l:contents, '\V\c[\s\*AUTOBACKUP\s\*:') != -1
-    let l:world_gen = l:stem ==? 'world_gen'
-                \ && match(l:contents, '\V\c[\s\*WORLD_GEN\s\*]') != -1
-    let l:colors    = l:stem ==? 'colors'
-                \ && match(l:contents, '\V\c[\s\*BLACK_R\s\*:') != -1
-    let l:announce  = l:stem ==? 'announcements'
-                \ && match(l:contents, '\V\c[\s\*REACHED_PEAK\s\*:') != -1
-    let l:interface = l:stem ==? 'interface'
-                \ && match(l:contents, '\V\c[\s\*BIND\s\*:') != -1
-
-    if l:raw || l:init || l:d_init || l:world_gen || l:colors || l:announce || l:interface
-        set ft=dwarffortress
+    if getline(1) =~? '\V'.stem && match(contents, s:token_pattern('object')) >= 0
+      set filetype=dwarffortress
+      return
     endif
+
+    for [type, pattern] in items(s:types)
+      if stem ==? type && match(contents, s:token_pattern(pattern)) >= 0
+        set filetype=dwarffortress
+        return
+      endif
+    endfor
 endfunction
