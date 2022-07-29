@@ -36,10 +36,11 @@ SETTINGS                                          *dwarffortress-configuration*
 
   Whether or not to inspect the contents of .txt files to determine if they
   are raw files.
-  
+
   To be specific, the plugin checks if the first line of the
-  file matches its filename, and whether it contains the string "`[OBJECT:`".
-  This could cause slowdowns if you're looking at, say, large log files.
+  file matches its filename, and whether the first few lines contains strings
+  known to indicate Dwarf Fortress data files. This could cause slowdowns if
+  you're looking at, say, large log files.
 
 
                                                         *g:dwarffortress-always*
@@ -47,7 +48,7 @@ SETTINGS                                          *dwarffortress-configuration*
 
   Whether to assume ALL .txt files are dwarf fortress raws.
   Note: This is probably a bad idea.
-  
+
 
 
 
